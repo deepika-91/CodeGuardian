@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
+<title>Hybrid Code Review</title>
+
+
+<style>
+
+/* =========================================================
+   GLOBAL
+   ========================================================= */
+
+* {
+    box-sizing: border-box;
+}
+
+
+body {
+
+    margin: 0;
+
+    padding: 0;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    background: #f4f6f8;
+
+    color: #1f2937;
+}
+
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.header {
+
+    background: #111827;
+
+    color: white;
+
+    padding: 25px 40px;
+
+    text-align: center;
+}
+
+
+.header h1 {
+
+    margin: 0;
+
+    font-size: 30px;
+}
+
+
+.header p {
+
+    margin-top: 8px;
+
+    color: #d1d5db;
+}
+
+
+/* =========================================================
+   MAIN CONTAINER
+   ========================================================= */
+
+.container {
+
+    width: 90%;
+
+    max-width: 1200px;
+
+    margin: 30px auto;
+}
+
+
+/* =========================================================
+   CARD
+   ========================================================= */
+
+.card {
+
+    background: white;
+
+    border-radius: 12px;
+
+    padding: 25px;
+
+    margin-bottom: 25px;
+
+    box-shadow:
+        0 4px 15px rgba(0,0,0,0.08);
+}
+
+
+.card h2 {
+
+    margin-top: 0;
+
+    color: #111827;
+
+    border-bottom:
+        2px solid #e5e7eb;
+
+    padding-bottom: 10px;
+}
+
+
+/* =========================================================
+   SOURCE CODE
+   ========================================================= */
+
+.code {
+
+    background: #111827;
+
+    color: #e5e7eb;
+
+    padding: 20px;
+
+    border-radius: 8px;
+
+    overflow-x: auto;
+
+    white-space: pre-wrap;
+
+    font-family:
+        Consolas,
+        "Courier New",
+        monospace;
+
+    line-height: 1.6;
+}
+
+
+/* =========================================================
+   AUTOMATIC JAVADOC
+   ========================================================= */
+
+.javadoc {
+    background: #111827;
+    color: #e5e7eb;
+    padding: 20px;
+    border-radius: 8px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    font-family:
+        Consolas,
+        "Courier New",
+        monospace;
+    line-height: 1.6;
+}
+
+
+
+/* =========================================================
+   STATIC ANALYZER
+   ========================================================= */
+
+.analyzer {
+
+    background: #f9fafb;
+
+    border-left:
+        5px solid #6366f1;
+
+    padding: 20px;
+
+    white-space: pre-wrap;
+
+    font-family:
+        Consolas,
+        "Courier New",
+        monospace;
+
+    line-height: 1.6;
+}
+
+
+/* =========================================================
+   COMPLEXITY CONTAINER
+   ========================================================= */
+
+.complexity-container {
+
+    display: flex;
+
+    gap: 20px;
+
+    flex-wrap: wrap;
+}
+
+
+/* =========================================================
+   COMPLEXITY BOX
+   ========================================================= */
+
+.complexity-box {
+
+    flex: 1;
+
+    min-width: 250px;
+
+    background: #f9fafb;
+
+    border:
+        1px solid #e5e7eb;
+
+    border-radius: 10px;
+
+    padding: 25px;
+
+    text-align: center;
+}
+
+
+/* =========================================================
+   COMPLEXITY TITLE
+   ========================================================= */
+
+.complexity-title {
+
+    font-size: 17px;
+
+    font-weight: bold;
+
+    margin-bottom: 15px;
+
+    color: #374151;
+}
+
+
+/* =========================================================
+   COMPLEXITY VALUE
+   ========================================================= */
+
+.complexity-value {
+
+    font-size: 26px;
+
+    font-weight: bold;
+
+    color: #16a34a;
+
+    font-family:
+        Consolas,
+        "Courier New",
+        monospace;
+}
+
+
+/* =========================================================
+   AI REVIEW
+   ========================================================= */
+
+.review {
+
+    background: #f0fdf4;
+
+    border-left:
+        5px solid #16a34a;
+
+    padding: 25px;
+
+    white-space: pre-wrap;
+
+    line-height: 1.7;
+
+    font-size: 16px;
+
+    border-radius: 8px;
+}
+
+
+/* =========================================================
+   BADGE
+   ========================================================= */
+
+.badge {
+
+    display: inline-block;
+
+    background: #16a34a;
+
+    color: white;
+
+    padding: 6px 12px;
+
+    border-radius: 20px;
+
+    font-size: 13px;
+
+    margin-bottom: 15px;
+}
+
+
+/* =========================================================
+   FOOTER
+   ========================================================= */
+
+.footer {
+
+    text-align: center;
+
+    padding: 25px;
+
+    color: #6b7280;
+
+    font-size: 14px;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 700px) {
+
+    .container {
+
+        width: 95%;
+    }
+
+    .complexity-container {
+
+        flex-direction: column;
+    }
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<!-- =====================================================
+     HEADER
+     ===================================================== -->
+
+<div class="header">
+
+    <h1>
+        Hybrid Code Review
+    </h1>
+
+    <p>
+        AI-Powered Code Review using LoRA and Static Analysis
+    </p>
+
+</div>
+
+
+<!-- =====================================================
+     MAIN CONTENT
+     ===================================================== -->
+
+<div class="container">
+
+
+    <!-- =================================================
+         SOURCE CODE
+         ================================================= -->
+
+    <div class="card">
+
+        <h2>
+            Source Code
+        </h2>
+
+        <pre class="code">
+public class TestExample {
+
+    public static void main(String[] args) {
+        int x = 10;
+        int y = 20;
+
+        if (x &lt; y) {
+            System.out.println(&quot;x is smaller&quot;);
+        }
+
+        System.out.println(&quot;Hello Hybrid Code Review&quot;);
+    }
+}
+</pre>
+
+    </div>
+
+
+    <!-- =================================================
+         STATIC ANALYZER RESULTS
+         ================================================= -->
+
+    <div class="card">
+
+        <h2>
+            Static Analyzer Results
+        </h2>
+
+        <pre class="analyzer">
+Checkstyle:
+- Missing Javadoc comment for TestExample
+- Missing Javadoc comment for main
+- Indentation violations
+
+PMD:
+- SystemPrintln: Usage of System.out/err
+- NoPackage: Class should belong to a named package
+- ShortVariable: Avoid variables with short names like x
+- ShortVariable: Avoid variables with short names like y
+- LocalVariableCouldBeFinal: Local variable x could be final
+- LocalVariableCouldBeFinal: Local variable y could be final
+</pre>
+
+    </div>
+
+
+    <!-- =================================================
+         AUTOMATIC JAVADOC GENERATION
+         ================================================= -->
+
+    <div class="card">
+
+        <h2>
+            Automatic JavaDoc Generation
+        </h2>
+
+        <pre class="javadoc">
+/**
+ * Represents the TestExample class.
+ */
+public class TestExample {
+
+    /**
+     * Entry point of the application.
+     *
+     * @param args parameter used by the method.
+     */
+    public static void main(String[] args) {
+        int x = 10;
+        int y = 20;
+
+        if (x &lt; y) {
+            System.out.println(&quot;x is smaller&quot;);
+        }
+
+        System.out.println(&quot;Hello Hybrid Code Review&quot;);
+    }
+}</pre>
+
+    </div>
+
+
+
+    <!-- =================================================
+         COMPLEXITY ANALYSIS
+         ================================================= -->
+
+    <div class="card">
+
+        <h2>
+            Complexity Analysis
+        </h2>
+
+
+        <div class="complexity-container">
+
+
+            <!-- TIME COMPLEXITY -->
+
+            <div class="complexity-box">
+
+                <div class="complexity-title">
+
+                    Time Complexity
+
+                </div>
+
+
+                <div class="complexity-value">
+
+                    Not determined
+
+                </div>
+
+            </div>
+
+
+            <!-- SPACE COMPLEXITY -->
+
+            <div class="complexity-box">
+
+                <div class="complexity-title">
+
+                    Space Complexity
+
+                </div>
+
+
+                <div class="complexity-value">
+
+                    Not determined
+
+                </div>
+
+            </div>
+
+
+        </div>
+
+    </div>
+
+
+    <!-- =================================================
+         AI GENERATED REVIEW
+         ================================================= -->
+
+    <div class="card">
+
+        <h2>
+            AI Generated Code Review
+        </h2>
+
+
+        <span class="badge">
+
+            LoRA Model Generated
+
+        </span>
+
+
+        <div class="review">
+
+            ### Issues found
+
+1. **Missing Javadoc comments for `TestExample`**
+   - The method `main` does not have a Javadoc comment, which is required for documentation purposes.
+   - The method `main` has a single line of code, which is not considered a Javadoc comment.
+
+2. **Missing Javadoc comments for `main`**
+   - The method `main` does not have a Javadoc comment, which is required for documentation purposes.
+   - The method `main` has a single line of code, which is not considered a Javadoc comment.
+
+3. **Indentation violations**
+   - The code has multiple lines of indentation, which is not consistent with the Java coding style.
+   - The code has multiple lines of indentation, which is not consistent with the Java coding style.
+
+### Suggestions for Improvements
+
+1. **Add Javadoc comments to `TestExample`**
+   - Add Javadoc comments to the `main` method to explain its purpose and functionality.
+
+2. **Fix indentation in `main` method**
+   - Fix indentation in the `main` method to ensure it is properly indented.
+
+3. **Remove unnecessary lines of code**
+   - Remove unnecessary lines of code from the `main` method to improve readability and maintainability.
+
+4. **Use proper data structures**
+   - Use proper data structures such as arrays or lists to store data.
+
+5. **Optimize code**
+   - Optimize the code to reduce unnecessary operations and improve performance.
+
+6. **Document the code**
+   - Document the code to explain its purpose and functionality.
+
+7. **Refactor the code**
+   - Refactor the code to improve readability and maintainability.
+
+8. **Add unit tests**
+   - Add unit tests to verify the correctness of the code.
+
+9. **Use proper naming conventions**
+   - Use proper naming conventions such as camelCase for classes, methods, and variables.
+
+10. **Implement exception handling**
+    - Implement exception handling to manage potential errors gracefully.
+
+### Improved code where appropriate
+
+```java
+public class TestExample {
+
+    public static void main(String[] args) {
+        int x = 10;
+        int y = 20;
+
+        if (x &lt; y) {
+            System.out.println(&quot;x is smaller&quot;);
+        } else {
+            System.out.println(&quot;y is larger&quot;);
+        }
+    }
+}
+```
+
+### Time complexity
+
+[O(1)]
+
+### Space complexity
+
+[O(1)]
+
+---
+
+### Instructions
+
+1.
+
+        </div>
+
+    </div>
+
+
+</div>
+
+
+<!-- =====================================================
+     FOOTER
+     ===================================================== -->
+
+<div class="footer">
+
+    Hybrid Code Review Project
+
+    <br>
+
+    Static Analysis + LoRA Fine-Tuned LLM
+
+</div>
+
+
+</body>
+
+</html>
