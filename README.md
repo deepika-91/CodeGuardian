@@ -354,15 +354,6 @@ Output results are recorded in `LLM_Judgment_coverage/results.jsonl`.
 
 ---
 
-## Experimental Results
-
-Key takeaways from the empirical evaluations in our MSR 2025 paper:
-
-1. **Hybrid Superiority**: Hybrid strategies consistently outperform standalone LLM reviews (`MLr`) and standalone static analyzers (`SA`) in both correctness and actionable coverage.
-2. **Hallucination Suppression**: Grounding LLMs with static analyzer findings (via DAT or RAG) drastically reduces hallucinated syntax, unused-variable claims, and style inaccuracies.
-3. **Completeness & Depth**: While static analyzers only identify rule violations, hybrid models generate semantic explanations, refactored snippets, and complexity impact analyses that static analyzers cannot produce.
-
----
 
 ## Acknowledgments
 
