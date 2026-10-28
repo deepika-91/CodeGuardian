@@ -1,6 +1,5 @@
 # CodeGuardian: Combining Large Language Models with Static Analyzers for Code Review Generation
 
-[![Paper](https://img.shields.io/badge/arXiv-2502.06633-b31b1b.svg)](https://arxiv.org/abs/2502.06633)
 [![Conference](https://img.shields.io/badge/MSR-2025-blue.svg)](https://conf.researchr.org/home/msr-2025)
 [![Python](https://img.shields.io/badge/Python-3.9%2B-brightgreen.svg)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-EE4C2C.svg)](https://pytorch.org/)
@@ -365,28 +364,8 @@ Key takeaways from the empirical evaluations in our MSR 2025 paper:
 
 ---
 
-## Citation
-
-If you find **CodeGuardian** or this research codebase useful in your work, please cite our paper:
-
-```bibtex
-@inproceedings{jaoua2025combining,
-  title     = {Combining Large Language Models with Static Analyzers for Code Review Generation},
-  author    = {Jaoua, Imen and Ben Sghaier, Oussama and Sahraoui, Houari},
-  booktitle = {Proceedings of the 22nd IEEE/ACM International Conference on Mining Software Repositories (MSR)},
-  year      = {2025},
-  url       = {https://arxiv.org/abs/2502.06633}
-}
-```
-
-**Paper Details:**
-- **Title**: Combining Large Language Models with Static Analyzers for Code Review Generation
-- **Authors**: Imen Jaoua, Oussama Ben Sghaier, Houari Sahraoui
-- **Conference**: IEEE/ACM MSR 2025
-- **Preprint**: [arXiv:2502.06633](https://arxiv.org/abs/2502.06633)
-
----
-
 ## Acknowledgments
 
-This research was conducted at the **Department of Computer Science and Operations Research (DIRO), Université de Montréal**. We gratefully acknowledge the open-source communities behind Checkstyle, PMD, Hugging Face, PyTorch, and vLLM.
+This research was conducted at the **Department of Computer Science and Information Technolog, Koneru Lakshmaiah Education Foundation, Bowrampet, Hyderabad, India**. We are thank you to Associate Professor [Dr. Jagan Mohan Reddy](https://github.com/jmreddy2106) for his support and guidance throughout the research work. 
+
+**CodeGuardian** is an open-source tool for automated software code review and quality assurance.
