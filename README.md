@@ -31,6 +31,8 @@ Rather than treating static analysis, LLM explanation, and code repair as discon
 
 ---
 
+## System Architecture Diagram
+
 [![CodeGardian](./CodeGuardian.png)](CodeGuardian.png)
 
 
@@ -114,12 +116,6 @@ Categorizes outcomes into three unambiguous states:
 - **`Validated by Available Checks`**: Patch cleanly applies, compiles, eliminates target issues, introduces no new static violations, and passes all test suites.
 - **`Failed Verification`**: Candidate patch fails compilation, reintroduces violations, or causes regression test failures after maximum retry attempts.
 - **`Inconclusive`**: Issue and explanation are verified, but no conclusive patch or test suite coverage is available to prove correctness mechanically. Residual risks are explicitly documented.
-
----
-
-## System Architecture Diagram
-
-![CodeGuardian Architecture](CodeGuardian.png)
 
 ---
 
