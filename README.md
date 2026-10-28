@@ -1,6 +1,5 @@
 # CodeGuardian: Combining Large Language Models with Static Analyzers for Code Review Generation
 
-[![Conference](https://img.shields.io/badge/MSR-2025-blue.svg)](https://conf.researchr.org/home/msr-2025)
 [![Python](https://img.shields.io/badge/Python-3.9%2B-brightgreen.svg)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-EE4C2C.svg)](https://pytorch.org/)
 [![HuggingFace](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Transformers%20%7C%20PEFT-yellow.svg)](https://huggingface.svg)
