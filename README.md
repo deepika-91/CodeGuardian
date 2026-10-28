@@ -1,135 +1,210 @@
-# CodeGuardian: Combining Large Language Models with Static Analyzers for Code Review Generation
+# CodeGuardian: Evidence-Grounded Java Code Review and Automated Repair Using Semantic Analysis and Execution Feedback
 
 [![Python](https://img.shields.io/badge/Python-3.9%2B-brightgreen.svg)](https://www.python.org/)
+[![Java](https://img.shields.io/badge/Java-17%20%7C%20Maven-ED8B00.svg)](https://www.oracle.com/java/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-EE4C2C.svg)](https://pytorch.org/)
-[![HuggingFace](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Transformers%20%7C%20PEFT-yellow.svg)](https://huggingface.svg)
-[![License](https://img.shields.io/badge/License-Academic-lightgrey.svg)](#citation)
+[![HuggingFace](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Transformers%20%7C%20PEFT-yellow.svg)](https://huggingface.co/)
+[![Static Analyzers](https://img.shields.io/badge/Analyzers-PMD%20%7C%20Checkstyle%20%7C%20SpotBugs-blue.svg)](https://pmd.github.io/)
+[![License](https://img.shields.io/badge/License-Academic-lightgrey.svg)](#acknowledgments)
 
-**CodeGuardian** is a hybrid automated code review framework that bridges the gap between **Knowledge-Based Systems (KBS)** (rule-based static analyzers like PMD and Checkstyle) and **Learning-Based Systems (LBS)** (Large Language Models like CodeLlama and Qwen2.5-Coder).
+**CodeGuardian** is an automated Java code review, explanation, and patch verification framework. It unifies **Knowledge-Based Systems (KBS)** (rule-based static analyzers including PMD, Checkstyle, and SpotBugs) and **Java Semantic Analysis** (AST and symbol resolution via JavaParser) with **Learning-Based Systems (LBS)** (Large Language Models like CodeLlama and Qwen2.5-Coder), governed by an **automated compilation and test-execution verification sandbox**.
 
-By integrating deterministic static analysis violations with the contextual comprehension and natural language capabilities of LLMs, CodeGuardian produces code review comments that are accurate, comprehensive, actionable, and grounded in both syntax standards and semantic intent.
+Rather than treating static analysis, LLM explanation, and code repair as disconnected tasks, CodeGuardian makes **evidence consistency across detection, explanation, repair, and validation** its central technical principle.
 
 ---
 
 ## Table of Contents
 
-- [Motivation & Core Concept](#motivation--core-concept)
-- [Hybrid Integration Strategies](#hybrid-integration-strategies)
-- [Key Features](#key-features)
-- [System Architecture](#system-architecture)
+- [The Research Problem & Gap](#the-research-problem--gap)
+- [Core Contributions (C1–C3)](#core-contributions-c1c3)
+- [Proposed End-to-End Architecture](#proposed-end-to-end-architecture)
+- [System Architecture Diagram](#system-architecture-diagram)
+- [Implementation Plan (4 Stages)](#implementation-plan-4-stages)
+- [Datasets & Experimental Design](#datasets--experimental-design)
+- [Evaluation Matrix & Metrics](#evaluation-matrix--metrics)
+- [Research Questions (RQ1–RQ5)](#research-questions-rq1rq5)
 - [Repository Structure](#repository-structure)
-- [Prerequisites & Installation](#prerequisites--installation)
-- [Step-by-Step Workflow](#step-by-step-workflow)
-  - [1. Data Preparation & Preprocessing](#1-data-preparation--preprocessing)
-  - [2. Model Training with LoRA](#2-model-training-with-lora)
-  - [3. Inference & Review Generation](#3-inference--review-generation)
-  - [4. Interactive HTML Dashboard](#4-interactive-html-dashboard)
-  - [5. LLM-as-a-Judge Evaluation](#5-llm-as-a-judge-evaluation)
-- [Experimental Results](#experimental-results)
-- [Citation](#citation)
+- [Environment Setup & Installation](#environment-setup--installation)
+- [Workflow Execution](#workflow-execution)
+- [Interactive HTML Review Dashboard](#interactive-html-review-dashboard)
 - [Acknowledgments](#acknowledgments)
 
 ---
 
-## Motivation & Core Concept
+[![CodeGardian](./CodeGuardian.png)](CodeGuardian.png)
 
-Automated code review systems conventionally fall into two complementary paradigms:
 
-| Paradigm | Strengths | Limitations |
+## The Research Problem & Gap
+
+Recent 2026 research published in *IEEE Transactions on Software Engineering* (agentic program repair with test-execution feedback) and *IEEE Access* (dynamic context retrieval and static-analysis-driven repair) demonstrates that simply combining LLMs with static analyzers or naive test-execution feedback is no longer sufficiently distinctive on its own.
+
+Existing approaches suffer from critical fragmentation:
+1. **Shallow Static Context**: Traditional static analyzers flag terse violations (e.g., *"Potential null pointer dereference"*) without resolving surrounding type hierarchies, callers, or semantic intent.
+2. **Ungrounded Explanations & Hallucinations**: Standalone LLMs generate plausible-sounding review commentary that frequently attributes errors to nonexistent lines or misinterprets Java language semantics.
+3. **Unverified & Regressive Fixes**: Generative patch models produce candidate edits that may silence an analyzer warning by deleting functional code, introducing syntax breakages, or breaking downstream regression tests.
+4. **Binary Over-Trust**: Assuming that any patch passing existing test suites is automatically correct overlooks test suite inadequacy and subtle regressions.
+
+**CodeGuardian** addresses these limitations by enforcing **end-to-end evidence consistency**:
+> When an issue (e.g., unsafe Java null dereference) is detected, its explanation must identify the concrete nullable value and execution path. Its candidate patch must address that specific path, and the verification stage must systematically validate that behavior through compiler checks, reanalysis, and focused test execution.
+
+---
+
+## Core Contributions (C1–C3)
+
+| Contribution | Proposed Mechanism | What Makes It Testable |
 | :--- | :--- | :--- |
-| **Static Analyzers (KBS)**<br>*(e.g., Checkstyle, PMD)* | Strict adherence to rules, deterministic precision, zero hallucination on predefined violation patterns. | Rigid rulesets, inability to reason about higher-level semantic intent, high false-alarm noise, lacks conversational guidance. |
-| **Large Language Models (LBS)**<br>*(e.g., CodeLlama, Qwen2.5-Coder)* | Deep contextual understanding, intent inference, natural language suggestions, synthesis across files. | Susceptible to hallucinations, inconsistent precision on edge-case syntax/style rules, unbounded outputs. |
-
-**CodeGuardian** synthesizes these complementary approaches into an end-to-end review engine that eliminates hallucinations while maintaining rich contextual explanations, asymptotic complexity evaluations, and automatic documentation generation.
-
----
-
-## Hybrid Integration Strategies
-
-As detailed in the MSR 2025 research paper, CodeGuardian studies static analyzer integration across three distinct stages:
-
-```
-  +--------------------------------------------------------------------------+
-  |                        Integration Strategies                            |
-  +--------------------------------------------------------------------------+
-                                       |
-       +-------------------------------+-------------------------------+
-       |                               |                               |
-       v                               v                               v
-[ Strategy 1: DAT ]             [ Strategy 2: RAG ]             [ Strategy 3: NCO ]
-Data-Augmented Training         Retrieval-Augmented Gen.        Naive Concatenation
-Static outputs injected into    Static reports dynamically      Post-inference merge of
-fine-tuning prompts (LoRA/SFT)  retrieved at inference time     raw static tool reports &
-to learn joint representations. into LLM context window.        generative LLM reviews.
-```
-
-1. **Data-Augmented Training (DAT / FTr)**: The model is fine-tuned on paired prompts containing code diffs and static analyzer diagnostic reports, training the LLM to learn joint representations and prioritize verified issues.
-2. **Retrieval-Augmented Generation (RAG)**: The base LLM dynamically retrieves static analysis violation outputs at inference time and conditions review generation upon those retrieved findings.
-3. **Naive Concatenation of Outputs (NCO / concat)**: Post-inference merging of raw static analyzer violations and LLM-generated review comments.
-
-These strategies are empirically compared against baseline **Standalone Static Analysis (SA)** and **Standalone LLM Review (MLr)**.
+| **C1. Java-Aware Issue Grounding** | Resolves types, methods, symbols, and surrounding dependencies using AST and symbol-solver passes (JavaParser + SymbolSolver) before prompting the review model. | Compare issue-level Precision, Recall, and $F_1$ with and without semantic context against ground-truth defect benchmarks. |
+| **C2. Evidence-Linked Explanations & Fixes** | Links every generated explanation and candidate patch directly to concrete source findings, rule definitions, and retrieved coding standards. | Quantify human-judged explanation correctness and the *unsupported-claim rate* (frequency of model assertions unsupported by code or rule evidence). |
+| **C3. Verification-Guided Repair Selection** | Rejects, filters, or iteratively refines patches using isolated compiler, analyzer re-execution, and regression test feedback, producing tri-state review verdicts. | Measure correct repair rate, regression rate, false verified-fix acceptance rate, and token/compute cost. |
 
 ---
 
-## Key Features
+## Proposed End-to-End Architecture
 
-- **Multi-Tool Static Analysis**: Built-in support for **PMD** (code flaws, design smells, dead code) and **Checkstyle** (coding standards, formatting, JavaDoc rules).
-- **LoRA Parameter-Efficient Fine-Tuning (PEFT)**:
-  - Lightweight training pipeline for `Qwen/Qwen2.5-Coder-0.5B-Instruct` (CPU/GPU-friendly).
-  - Scalable SFT fine-tuning pipeline for `codellama/CodeLlama-7b-Instruct-hf` with Flash Attention and gradient accumulation.
-- **Leakage-Free Dataset Splitting**: Group-aware dataset partitioning (`code + patch` key) preventing data contamination between train, validation, and test splits.
-- **Asymptotic Complexity Extraction**: Automatically extracts and bounds both **Time Complexity** ($O(\dots)$) and **Space Complexity** ($O(\dots)$) from generated reviews.
-- **Automatic JavaDoc Enrichment**: Regex and signature-aware parsing engine that detects undocumented classes and methods and drafts standard JavaDocs.
-- **Interactive Web Dashboard (`code_review.html`)**: Beautiful, responsive HTML report showcasing side-by-side source code, static analyzer findings, generated JavaDocs, complexity metrics, and formatted AI review comments.
-- **LLM-as-a-Judge Evaluation Pipeline**:
-  - **Accuracy Judge**: Evaluates review accuracy (`Accurate`, `Partially Accurate`, `Not Accurate`) across all 5 strategies.
-  - **Coverage / Completeness Judge**: Ranks reviews from 1 (most complete) to 5 (least complete).
+The CodeGuardian framework operates across seven coordinated components:
+
+```
++---------------------------------------------------------------------------------------------------------+
+|                                        CodeGuardian Pipeline                                            |
++---------------------------------------------------------------------------------------------------------+
+  1. Java Git Repo / PR        --> Source code, changed hunks, Maven/Gradle build configurations
+  2. Multi-Tool Static Analysis--> PMD, Checkstyle, SpotBugs, Semgrep
+  3. Java Semantic Analysis    --> AST parsing, symbol resolution, method invocations, type hierarchies
+  4. Finding Normalization &   --> Canonical finding records + guideline retrieval (RAG) + verified fixes
+     Evidence Retrieval
+  5. Evidence-Grounded LLM     --> Root-cause detection, severity, structured explanation, minimal patch
+     Reasoning & Repair
+  6. Automated Verification    --> Sandbox patch application -> compilation -> reanalysis -> regression
+  7. Validated Review Report   --> Tri-state verdict: [Validated by checks | Failed verification | Inconclusive]
+```
+
+### 1. Java Git Repository & Pull Request Ingestion
+- Extracts modified files, hunk boundaries, and lines from Git diffs.
+- Ingests build definitions (`pom.xml`, `build.gradle`) to identify dependencies, source targets, and test suites.
+
+### 2. Multi-Tool Static Analysis
+- Executes industry-standard analyzers:
+  - **PMD**: Uncovers code smells, questionable constructs, dead code, and concurrency defects.
+  - **Checkstyle**: Audits adherence to formatting standards, JavaDoc completeness, and naming conventions.
+  - **SpotBugs**: Detects bytecode-level defect patterns, null pointer dereferences, and security vulnerabilities.
+
+### 3. Java Semantic Analysis (AST & Symbol Resolution)
+- Employs **JavaParser with SymbolSolver** on compilable project snapshots.
+- Resolves fully qualified types, variable declaration scopes, method override relationships, and control/data dependencies around changed regions.
+
+### 4. Finding Normalization & Evidence Retrieval
+- Transforms diverse tool outputs into canonical finding records:
+  $$\text{Finding} = \langle \text{File}, \text{Line}, \text{RuleID}, \text{Severity}, \text{AST Context}, \text{Tool Output} \rangle$$
+- Retrieves top-$k$ relevant coding standards, rule documentation, and verified historical patches from an embedded vector corpus.
+
+### 5. Evidence-Grounded LLM Reasoning & Candidate Repair
+- Generates structured review explanations detailing the underlying issue, severity, execution path, and root cause.
+- Synthesizes minimal candidate Java patches (unified diff format) constrained strictly to relevant files without unrequested modifications to build or test configurations.
+
+### 6. Automated Multi-Stage Verification
+Executes in an isolated sandbox environment:
+1. **Patch Application**: Applies candidate diffs cleanly against target files.
+2. **Compilation Verification**: Validates compilation via Maven (`mvn compile`).
+3. **Static Reanalysis**: Re-runs PMD, SpotBugs, and Checkstyle to ensure target violations are resolved without introducing new warnings.
+4. **Focused & Regression Testing**: Executes unit and integration test suites (`mvn test`).
+5. **Iterative Diagnostics Feedback**: Returns compiler errors and failing test traces back to the model for a bounded number of refinement attempts.
+
+### 7. Validated Review Report
+Categorizes outcomes into three unambiguous states:
+- **`Validated by Available Checks`**: Patch cleanly applies, compiles, eliminates target issues, introduces no new static violations, and passes all test suites.
+- **`Failed Verification`**: Candidate patch fails compilation, reintroduces violations, or causes regression test failures after maximum retry attempts.
+- **`Inconclusive`**: Issue and explanation are verified, but no conclusive patch or test suite coverage is available to prove correctness mechanically. Residual risks are explicitly documented.
 
 ---
 
-## System Architecture
+## System Architecture Diagram
 
-```mermaid
-flowchart TD
-    subgraph Input["Input Source"]
-        SRC["Java Source Code / Patch"]
-    end
+![CodeGuardian Architecture](CodeGuardian.png)
 
-    subgraph StaticAnalysis["Knowledge-Based Static Analyzers"]
-        PMD["PMD Analyzer"]
-        CS["Checkstyle Analyzer"]
-        SRC --> PMD
-        SRC --> CS
-        PMD --> SA_OUT["Static Analyzer Diagnostics"]
-        CS --> SA_OUT
-    end
+---
 
-    subgraph HybridEngine["Hybrid Review Generation Engine"]
-        PROMPT["Joint Prompt Construction<br/>(Code + Analyzer Findings + Instructions)"]
-        SRC --> PROMPT
-        SA_OUT --> PROMPT
-        
-        LLM["Fine-Tuned LLM / LoRA Adapter<br/>(Qwen2.5-Coder / CodeLlama)"]
-        PROMPT --> LLM
-        LLM --> RAW_REVIEW["Generated Review Output"]
-    end
+## Implementation Plan (4 Stages)
 
-    subgraph PostProcessing["Post-Processing & Enrichment"]
-        COMPLEXITY["Complexity Parser<br/>[TIME_COMPLEXITY] & [SPACE_COMPLEXITY]"]
-        JAVADOC["Automated JavaDoc Generator"]
-        RAW_REVIEW --> COMPLEXITY
-        SRC --> JAVADOC
-    end
+CodeGuardian is built in four independent, testable stages:
 
-    subgraph Output["Interactive Deliverable"]
-        DASHBOARD["Interactive Review Dashboard<br/>(code_review.html)"]
-        SRC --> DASHBOARD
-        SA_OUT --> DASHBOARD
-        COMPLEXITY --> DASHBOARD
-        JAVADOC --> DASHBOARD
-        RAW_REVIEW --> DASHBOARD
-    end
 ```
+Stage 1: Issue Detection & Java Context  ---> Deliverable: Normalized findings with symbol provenance
+Stage 2: Explanation & Rule Retrieval    ---> Deliverable: Auditable, evidence-backed review report
+Stage 3: Candidate Patch Generation      ---> Deliverable: Minimal, reproducible candidate diffs
+Stage 4: Verification & Feedback Loop    ---> Deliverable: Verified patch execution & tri-state report
+```
+
+### Stage 1 — Issue Detection & Java Context
+- Integrate PMD, Checkstyle, and SpotBugs.
+- Embed **JavaParser with SymbolSolver** to resolve variable declarations, method invocations, and enclosing class hierarchies around each finding.
+- **Deliverable**: Normalized finding objects containing file, line, rule, surrounding AST context, and symbol provenance.
+
+### Stage 2 — Explanation & Retrieval
+- Build a versioned retrieval corpus comprising Java language specifications, analyzer rule catalogs, organization guidelines, and verified historical fixes.
+- Query the corpus using structured finding metadata to supply grounding context to the LLM.
+- **Deliverable**: An auditable, structured review report (root cause, severity, evidence) rather than an ungrounded natural-language paragraph.
+
+### Stage 3 — Candidate Patch Generation
+- Prompt the model for minimal, syntactically valid unified diffs targeted strictly to the issue region.
+- Prevent unrequested modifications to tests, dependencies, or unrelated methods.
+- Employ AST-aware rule transformations for deterministic style and hygiene remediation where appropriate.
+- **Deliverable**: Reproducible Java patch proposals paired with reasoning logs.
+
+### Stage 4 — Verification & Feedback Loop
+- Apply candidate patches inside isolated workspaces.
+- Compile via `mvn compile`, rerun static analyzers, and execute regression test suites (`mvn test`).
+- Return compiler diagnostics and test failure traces back to the generator for up to $N$ iterations.
+- **Deliverable**: Fully verified review verdicts, failure logs, and patch attempt histories.
+
+---
+
+## Datasets & Experimental Design
+
+Evaluating both code-quality issue detection and functional defect repair requires two complementary, high-integrity benchmarks:
+
+| Benchmark | Primary Purpose | Scope & Description |
+| :--- | :--- | :--- |
+| **Defects4J** | Functional Bug Repair & Test Verification | Widely accepted benchmark of real Java bugs with reproducible failing test suites and verified human patches. [Defects4J Repository](https://github.com/rjust/defects4j) |
+| **Bears** | Build Reproducibility & Bug Diversity | Java defect benchmark with reproducible branch histories across diverse build systems. [Bears Benchmark](https://github.com/bears-bugs/bears-benchmark) |
+| **Curated Java Analyzer Findings** | Rule Detection, Explanation & Static Remediation | Large corpus of real-world open-source Java pull requests evaluated across PMD, Checkstyle, and SpotBugs. Stratified, double-labeled human validation to avoid treating static warnings as ground truth. |
+
+### Leakage Controls & Splitting Strategy
+- **Repository-Level & Temporal Partitioning**: Training, validation, and testing sets are partitioned strictly by repository and commit timestamp to ensure zero test contamination.
+- **Compilable Project Reconstructions**: Analyzers and AST solvers run on fully resolved, compilable project snapshots rather than isolated diff hunks.
+
+---
+
+## Evaluation Matrix & Metrics
+
+| Dimension | Metric | Definition & Evaluation Target |
+| :--- | :--- | :--- |
+| **Detection Quality** | Precision, Recall, $F_1$ | Accuracy of identified issues against annotated ground-truth defects and confirmed violations. |
+| **Explanation Faithfulness** | Explanation Correctness | Human-evaluated accuracy of the root-cause diagnosis and reasoning. |
+| | Unsupported-Claim Rate | Percentage of generated review comments making assertions not grounded in code or rule evidence. |
+| **Fix Generation** | Patch Application Rate | Percentage of candidate patches that apply cleanly via `git apply`. |
+| | Compilation Success Rate | Fraction of generated patches that compile successfully without syntax or type errors. |
+| **Repair Correctness** | Correct Repair Rate | Percentage of patches that completely resolve the defect without regression. |
+| **Verification Reliability** | **False Verified-Fix Acceptance** | Frequency at which the verification pipeline marks a patch as *validated* when it is actually incorrect or overfits. |
+| | Regression Rate | Percentage of patches that break previously passing tests or introduce new static warnings. |
+| **Operational Efficiency** | Runtime & Token Overhead | Wall-clock latency per pull request, model invocation count, GPU/CPU utilization, and token expenditure. |
+
+### Controlled Ablation Study Plan
+1. **w/o Semantic Context**: Disables JavaParser symbol resolution (evaluates contribution C1).
+2. **w/o Retrieved Guidelines**: Disables RAG corpus grounding (evaluates contribution C2).
+3. **w/o Evidence Constraints**: Unrestricts LLM prompts from finding provenance (evaluates hallucination reduction).
+4. **w/o Verification Feedback**: Disables compiler/test feedback loops (evaluates contribution C3).
+
+---
+
+## Research Questions (RQ1–RQ5)
+
+The experimental investigation addresses five core research questions:
+
+- **RQ1 (Semantic Grounding)**: *To what extent does Java-specific semantic analysis (AST and symbol resolution) improve the detection and precision of actionable code review issues?*
+- **RQ2 (Explanation Faithfulness)**: *Does evidence-grounded retrieval significantly reduce unsupported claims and improve the correctness and developer usefulness of generated review comments?*
+- **RQ3 (Dual-Domain Repair)**: *Can the proposed framework synthesize syntactically and semantically correct patches for both static-analysis violations and functional Java defects?*
+- **RQ4 (Verification Reliability)**: *How effectively does execution-based multi-stage verification detect incorrect, regressive, or overfitting candidate patches compared to unverified LLM generation?*
+- **RQ5 (Computational Efficiency)**: *What computational and token overhead does the end-to-end framework introduce compared to static-only, LLM-only, and conventional RAG pipelines?*
 
 ---
 
@@ -137,23 +212,24 @@ flowchart TD
 
 ```plaintext
 CodeGuardian/
-├── README.md                              # Project documentation and guide
-├── code_review.html                       # Generated interactive code review report
-├── inference.py                           # End-to-end hybrid inference pipeline & HTML generator
+├── README.md                              # Core project documentation and research specifications
+├── CodeGuardian.tex                       # IEEE conference manuscript source file
+├── code_review.html                       # Interactive HTML code review dashboard output
+├── inference.py                           # Hybrid inference engine, complexity analyzer & HTML generator
 ├── inference_backup.py                    # Minimal CLI inference script
 ├── train_lora.py                          # Lightweight LoRA fine-tuning script (Qwen2.5-Coder)
 ├── transform_dataset_local.py             # Group-based dataset splitter and prompt formatter
 ├── convert_dataset.py                     # Pickle (.pkl) to CSV conversion utility
-├── inspect_dataset.py                     # Dataset inspection and summary metrics
+├── inspect_dataset.py                     # Dataset inspection and summary statistics
 ├── inspect_relationships.py               # Tool overlap and review distribution inspector
-├── inspect_tools.py                       # Distribution and statistics across static tools
+├── inspect_tools.py                       # Distribution across static tools
 │
 ├── tools/                                 # Static analyzer binaries and configurations
 │   ├── checkstyle/
 │   │   └── checkstyle.jar                 # Checkstyle executable JAR
 │   └── pmd/
 │       ├── bin/                           # PMD launcher binaries (pmd, pmd.bat)
-│       └── lib/                           # PMD dependencies and rule libraries
+│       └── lib/                           # PMD libraries and rule packages
 │
 ├── preparing_dataset_before_filtering/    # Raw dataset extraction and analysis scripts
 │   ├── command_checkstyle.py              # Script executing Checkstyle across Java files
@@ -194,15 +270,16 @@ CodeGuardian/
 
 ---
 
-## Prerequisites & Installation
+## Environment Setup & Installation
 
-### 1. System Requirements
+### 1. Prerequisites
 - **Operating System**: Linux, macOS, or Windows
 - **Python**: Version 3.9, 3.10, or 3.11
-- **Java Runtime Environment**: Java 11 or higher (required by PMD and Checkstyle)
+- **Java Development Kit**: JDK 17 (recommended) or JDK 11
+- **Apache Maven**: Version 3.8+ (required for automated verification and builds)
 - **CUDA** (optional): Recommended for GPU acceleration (NVIDIA GPU with CUDA 11.8+ or 12.x)
 
-### 2. Python Environment Setup
+### 2. Python Virtual Environment
 
 Clone the repository and set up a virtual environment:
 
@@ -210,7 +287,6 @@ Clone the repository and set up a virtual environment:
 git clone https://github.com/deepika-91/CodeGuardian.git
 cd CodeGuardian
 
-# Create and activate virtual environment
 python3 -m venv venv
 source venv/bin/activate       # On Windows: venv\Scripts\activate
 ```
@@ -219,66 +295,49 @@ Install core dependencies:
 
 ```bash
 pip install --upgrade pip
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121  # or standard wheels for CPU/Mac
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121  # or default wheels for CPU/Mac
 pip install transformers peft datasets trl accelerate scikit-learn pandas numpy tqdm
 ```
 
-### 3. Verify Java & Tool Paths
-
-Verify that Java is available on your system path:
+### 3. Verify System Tools
 
 ```bash
 java -version
+mvn -version
 ```
-
-The static analyzer tools are located in `tools/`:
-- **Checkstyle**: `tools/checkstyle/checkstyle.jar`
-- **PMD**: `tools/pmd/bin/pmd` (Linux/macOS) or `tools/pmd/bin/pmd.bat` (Windows)
 
 ---
 
-## Step-by-Step Workflow
+## Workflow Execution
 
-### 1. Data Preparation & Preprocessing
-
-The dataset preparation pipeline formats raw Java code, executes static analyzers, extracts patches around flagged issues, and partitions data safely:
-
+### 1. Dataset Preprocessing & Grouped Partitioning
 ```bash
-# 1. Format raw Java files using Google Java Format
+# Format raw Java files
 python preparing_dataset_before_filtering/formatting_java_file.py
 
-# 2. Run static analysis across target codebases
+# Run static analyzers across target Java code
 python preparing_dataset_before_filtering/command_checkstyle.py
 python preparing_dataset_before_filtering/command_pmd.py
 
-# 3. Parse and extract violation comments into structured tabular format
+# Extract normalized review records
 python preparing_dataset_before_filtering/extract_reviews.py
 
-# 4. Extract method patches and filter prompt token lengths
+# Extract localized patches and filter sequence lengths
 python patches_extraction/extract_patches.py
 python patches_extraction/filtering_long_prompts.py
 
-# 5. Partition dataset by code+patch groups to prevent split leakage
+# Partition dataset by code+patch groups (80/10/10 split)
 python transform_dataset_local.py
 ```
 
-`transform_dataset_local.py` splits data into 80% train, 10% validation, and 10% test, saving the final `DatasetDict` to `processed_dataset_new_prompt/`.
-
 ### 2. Model Training with LoRA
 
-#### Option A: Lightweight Training on Qwen2.5-Coder (CPU/GPU)
-
-For quick demonstration or local experimentation:
-
+#### Lightweight Training (Qwen2.5-Coder on CPU/GPU)
 ```bash
 python train_lora.py
 ```
-This trains a Low-Rank Adapter (LoRA) on `Qwen/Qwen2.5-Coder-0.5B-Instruct` and saves the weights to `qwen_code_review_lora/`.
 
-#### Option B: Full SFT Training on CodeLlama-7B (Multi-GPU)
-
-For full research experiments using `CodeLlama-7b-Instruct-hf`:
-
+#### Scalable SFT Training (CodeLlama-7B Multi-GPU)
 ```bash
 python -m training.training \
     --model_name "codellama/CodeLlama-7b-Instruct-hf" \
@@ -291,33 +350,35 @@ python -m training.training \
 ```
 
 ### 3. Inference & Review Generation
-
-To generate an end-to-end review for a target Java code snippet:
-
+Run the prototype hybrid reviewer on target Java source:
 ```bash
 python inference.py
 ```
+This runs the fine-tuned model, parses Checkstyle and PMD outputs, extracts asymptotic time/space complexities, enriches JavaDoc documentation, and outputs `code_review.html`.
 
-`inference.py` performs the following automated steps:
-1. Loads the base model (`Qwen/Qwen2.5-Coder-0.5B-Instruct`) and attaches the trained LoRA adapter (`qwen_code_review_lora`).
-2. Synthesizes static analyzer outputs (Checkstyle & PMD) with the source code into an instruction-tuned prompt.
-3. Performs autoregressive generation with sampling parameters (`temperature=0.2`, `top_p=0.9`, `repetition_penalty=1.05`).
-4. Extracts asymptotic complexity metrics (`[TIME_COMPLEXITY]` and `[SPACE_COMPLEXITY]`).
-5. Generates missing JavaDoc comments for classes and methods.
-6. Renders and outputs `code_review.html`.
+### 4. LLM-as-a-Judge Evaluation
 
-### 4. Interactive HTML Dashboard
+```bash
+# Evaluate issue accuracy across methods (FTr, RAG, SA, MLr, concat)
+python LLM_Judgment_acuracy/inference.py
 
-The generated `code_review.html` dashboard provides a clean visual interface for reviewing code:
+# Rank review completeness across methods (1 = most complete, 5 = least complete)
+python LLM_Judgment_coverage/inference.py
+```
 
-- **Source Code Card**: Displays the target Java code snippet with syntax highlighting.
-- **Static Analyzer Results**: Outlines exact violations flagged by Checkstyle and PMD.
-- **Automatic JavaDoc Generation**: Displays automatically synthesized JavaDocs ready for insertion.
-- **Complexity Analysis**: Visual metric boxes for estimated Time and Space complexity.
-- **AI-Generated Review**: Structured feedback covering issues found, explanations, and suggested improvements.
+---
 
-Simply open `code_review.html` in any modern web browser:
+## Interactive HTML Review Dashboard
 
+The generated [code_review.html](file:///Users/djmr/Documents/research_work/2026/CodeGuardian/CodeGuardian/code_review.html) dashboard delivers a rich, self-contained visual interface:
+
+- **Source Code Viewer**: Formatted view of the original Java code.
+- **Static Analyzer Panel**: Exact findings flagged by Checkstyle, PMD, and SpotBugs.
+- **Automated JavaDoc Enrichment**: Synthesized standard JavaDoc documentation for classes and methods.
+- **Complexity Assessment**: Parsed Time ($O(\dots)$) and Space ($O(\dots)$) complexity indicators.
+- **AI-Generated Review**: Issue breakdown, root-cause explanation, and actionable remediation advice.
+
+To inspect the dashboard:
 ```bash
 # macOS
 open code_review.html
@@ -329,33 +390,10 @@ xdg-open code_review.html
 start code_review.html
 ```
 
-### 5. LLM-as-a-Judge Evaluation
-
-The framework provides an evaluation harness using high-capacity LLMs (such as Llama-3-70B/8B) to assess review quality:
-
-#### Accuracy Classification
-
-Evaluates whether reviews are `Accurate`, `Partially Accurate`, or `Not Accurate`:
-
-```bash
-python LLM_Judgment_acuracy/inference.py
-```
-Output results are recorded in `LLM_Judgment_acuracy/results21.jsonl`.
-
-#### Coverage & Completeness Ranking
-
-Compares and ranks the 5 approaches (`FTr`, `MLr`, `concat`, `RAG`, `SA`) from 1 (most complete) to 5 (least complete):
-
-```bash
-python LLM_Judgment_coverage/inference.py
-```
-Output results are recorded in `LLM_Judgment_coverage/results.jsonl`.
-
 ---
-
 
 ## Acknowledgments
 
-This research was conducted at the **Department of Computer Science and Information Technolog, Koneru Lakshmaiah Education Foundation, Bowrampet, Hyderabad, India**. We are thank you to Associate Professor [Dr. Jagan Mohan Reddy](https://github.com/jmreddy2106) for his support and guidance throughout the research work. 
+This research was conducted at the **Department of Computer Science and Information Technology, Koneru Lakshmaiah Education Foundation, Bowrampet, Hyderabad, India**. We express our sincere gratitude to Associate Professor [Dr. Jagan Mohan Reddy Danda](https://github.com/jmreddy2106) for his invaluable support and guidance throughout this research work.
 
-**CodeGuardian** is an open-source tool for automated software code review and quality assurance.
+**CodeGuardian** is an open-source tool for automated software code review, explanation, and quality verification.

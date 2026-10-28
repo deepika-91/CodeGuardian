@@ -1,389 +1,158 @@
 <!DOCTYPE html>
-
 <html lang="en">
-
 <head>
-
 <meta charset="UTF-8">
-
-<meta name="viewport"
-      content="width=device-width, initial-scale=1.0">
-
-<title>Hybrid Code Review</title>
-
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CodeGuardian Review Report</title>
 <style>
-
-/* =========================================================
-   GLOBAL
-   ========================================================= */
-
-* {
-    box-sizing: border-box;
-}
-
-
+* { box-sizing: border-box; }
 body {
-
-    margin: 0;
-
-    padding: 0;
-
-    font-family:
-        Arial,
-        Helvetica,
-        sans-serif;
-
-    background: #f4f6f8;
-
-    color: #1f2937;
+    margin: 0; padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #0f172a; color: #f8fafc;
+    line-height: 1.6;
 }
-
-
-/* =========================================================
-   HEADER
-   ========================================================= */
-
 .header {
-
-    background: #111827;
-
-    color: white;
-
-    padding: 25px 40px;
-
-    text-align: center;
+    background: linear-gradient(135deg, #1e1b4b, #0f172a);
+    border-bottom: 1px solid #334155;
+    padding: 35px 20px; text-align: center;
 }
-
-
-.header h1 {
-
-    margin: 0;
-
-    font-size: 30px;
-}
-
-
-.header p {
-
-    margin-top: 8px;
-
-    color: #d1d5db;
-}
-
-
-/* =========================================================
-   MAIN CONTAINER
-   ========================================================= */
+.header h1 { margin: 0; font-size: 28px; color: #38bdf8; font-weight: 700; }
+.header p { margin: 8px 0 0; color: #94a3b8; font-size: 15px; }
 
 .container {
-
-    width: 90%;
-
-    max-width: 1200px;
-
-    margin: 30px auto;
+    width: 92%; max-width: 1250px;
+    margin: 30px auto; display: flex; flex-direction: column; gap: 25px;
 }
 
+.verdict-banner {
+    padding: 22px 28px; border-radius: 12px;
+    display: flex; flex-direction: column; gap: 6px;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+.badge-pass { background: rgba(34, 197, 94, 0.15); border-color: #22c55e; }
+.badge-inconclusive { background: rgba(245, 158, 11, 0.15); border-color: #f59e0b; }
+.badge-fail { background: rgba(239, 68, 68, 0.15); border-color: #ef4444; }
+.badge-neutral { background: rgba(100, 116, 139, 0.15); border-color: #64748b; }
 
-/* =========================================================
-   CARD
-   ========================================================= */
+.verdict-title { font-size: 20px; font-weight: 800; letter-spacing: 0.5px; }
+.badge-pass .verdict-title { color: #4ade80; }
+.badge-inconclusive .verdict-title { color: #fbbf24; }
+.badge-fail .verdict-title { color: #f87171; }
+.verdict-desc { font-size: 14px; color: #cbd5e1; }
+
+.metrics-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px;
+}
+.metric-card {
+    background: #1e293b; border: 1px solid #334155;
+    border-radius: 10px; padding: 18px; text-align: center;
+}
+.metric-label { font-size: 13px; color: #94a3b8; text-transform: uppercase; font-weight: 600; }
+.metric-val { font-size: 24px; font-weight: 700; margin-top: 6px; color: #38bdf8; }
 
 .card {
-
-    background: white;
-
-    border-radius: 12px;
-
-    padding: 25px;
-
-    margin-bottom: 25px;
-
-    box-shadow:
-        0 4px 15px rgba(0,0,0,0.08);
+    background: #1e293b; border: 1px solid #334155;
+    border-radius: 12px; padding: 24px;
 }
-
-
 .card h2 {
-
-    margin-top: 0;
-
-    color: #111827;
-
-    border-bottom:
-        2px solid #e5e7eb;
-
-    padding-bottom: 10px;
+    margin-top: 0; font-size: 20px; color: #f1f5f9;
+    border-bottom: 1px solid #334155; padding-bottom: 12px;
 }
 
-
-/* =========================================================
-   SOURCE CODE
-   ========================================================= */
-
-.code {
-
-    background: #111827;
-
-    color: #e5e7eb;
-
-    padding: 20px;
-
-    border-radius: 8px;
-
-    overflow-x: auto;
-
-    white-space: pre-wrap;
-
-    font-family:
-        Consolas,
-        "Courier New",
-        monospace;
-
-    line-height: 1.6;
+pre.code-block {
+    background: #090d16; color: #e2e8f0;
+    padding: 18px; border-radius: 8px; overflow-x: auto;
+    font-family: "SFMono-Regular", Consolas, "Courier New", monospace;
+    font-size: 13.5px; line-height: 1.5; border: 1px solid #1e293b;
 }
 
-
-/* =========================================================
-   AUTOMATIC JAVADOC
-   ========================================================= */
-
-.javadoc {
-    background: #111827;
-    color: #e5e7eb;
-    padding: 20px;
-    border-radius: 8px;
-    overflow-x: auto;
-    white-space: pre-wrap;
-    font-family:
-        Consolas,
-        "Courier New",
-        monospace;
-    line-height: 1.6;
+table {
+    width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px;
 }
-
-
-
-/* =========================================================
-   STATIC ANALYZER
-   ========================================================= */
-
-.analyzer {
-
-    background: #f9fafb;
-
-    border-left:
-        5px solid #6366f1;
-
-    padding: 20px;
-
-    white-space: pre-wrap;
-
-    font-family:
-        Consolas,
-        "Courier New",
-        monospace;
-
-    line-height: 1.6;
+th, td {
+    padding: 12px 14px; text-align: left; border-bottom: 1px solid #334155;
 }
+th { background: #0f172a; color: #94a3b8; font-weight: 600; }
+tr:hover { background: rgba(255,255,255,0.02); }
 
-
-/* =========================================================
-   COMPLEXITY CONTAINER
-   ========================================================= */
-
-.complexity-container {
-
-    display: flex;
-
-    gap: 20px;
-
-    flex-wrap: wrap;
+.tool-tag {
+    display: inline-block; padding: 3px 8px; border-radius: 6px;
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
 }
+.tool-pmd { background: #818cf8; color: #1e1b4b; }
+.tool-checkstyle { background: #38bdf8; color: #082f49; }
 
-
-/* =========================================================
-   COMPLEXITY BOX
-   ========================================================= */
-
-.complexity-box {
-
-    flex: 1;
-
-    min-width: 250px;
-
-    background: #f9fafb;
-
-    border:
-        1px solid #e5e7eb;
-
-    border-radius: 10px;
-
-    padding: 25px;
-
-    text-align: center;
+.sev-tag {
+    display: inline-block; padding: 2px 8px; border-radius: 4px;
+    font-size: 11px; font-weight: 600;
 }
+.sev-warning, .sev-medium, .sev-3 { background: #ca8a04; color: #fef08a; }
+.sev-error, .sev-high, .sev-2, .sev-1 { background: #dc2626; color: #fecaca; }
 
+.link { color: #38bdf8; text-decoration: none; font-weight: 600; }
+.link:hover { text-decoration: underline; }
 
-/* =========================================================
-   COMPLEXITY TITLE
-   ========================================================= */
-
-.complexity-title {
-
-    font-size: 17px;
-
-    font-weight: bold;
-
-    margin-bottom: 15px;
-
-    color: #374151;
+.issue-item {
+    background: #0f172a; border: 1px solid #334155;
+    border-radius: 8px; padding: 18px; margin-bottom: 15px;
 }
-
-
-/* =========================================================
-   COMPLEXITY VALUE
-   ========================================================= */
-
-.complexity-value {
-
-    font-size: 26px;
-
-    font-weight: bold;
-
-    color: #16a34a;
-
-    font-family:
-        Consolas,
-        "Courier New",
-        monospace;
+.issue-header {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 10px;
 }
-
-
-/* =========================================================
-   AI REVIEW
-   ========================================================= */
-
-.review {
-
-    background: #f0fdf4;
-
-    border-left:
-        5px solid #16a34a;
-
-    padding: 25px;
-
-    white-space: pre-wrap;
-
-    line-height: 1.7;
-
-    font-size: 16px;
-
-    border-radius: 8px;
+.issue-num {
+    background: #38bdf8; color: #082f49; padding: 2px 8px;
+    border-radius: 4px; font-weight: 700; font-size: 12px;
 }
-
-
-/* =========================================================
-   BADGE
-   ========================================================= */
-
-.badge {
-
-    display: inline-block;
-
-    background: #16a34a;
-
-    color: white;
-
-    padding: 6px 12px;
-
-    border-radius: 20px;
-
-    font-size: 13px;
-
-    margin-bottom: 15px;
-}
-
-
-/* =========================================================
-   FOOTER
-   ========================================================= */
+.issue-title { font-size: 16px; font-weight: 700; color: #f8fafc; }
+.issue-body p { margin: 6px 0; font-size: 14px; color: #cbd5e1; }
+.ref-tag { background: #1e293b; padding: 2px 8px; border-radius: 4px; color: #a5f3fc; font-size: 12px; }
 
 .footer {
-
-    text-align: center;
-
-    padding: 25px;
-
-    color: #6b7280;
-
-    font-size: 14px;
+    text-align: center; padding: 30px; color: #64748b; font-size: 13px;
+    border-top: 1px solid #1e293b; margin-top: 20px;
 }
-
-
-/* =========================================================
-   RESPONSIVE
-   ========================================================= */
-
-@media (max-width: 700px) {
-
-    .container {
-
-        width: 95%;
-    }
-
-    .complexity-container {
-
-        flex-direction: column;
-    }
-
-}
-
 </style>
-
 </head>
-
-
 <body>
 
-
-<!-- =====================================================
-     HEADER
-     ===================================================== -->
-
 <div class="header">
-
-    <h1>
-        Hybrid Code Review
-    </h1>
-
-    <p>
-        AI-Powered Code Review using LoRA and Static Analysis
-    </p>
-
+    <h1>CodeGuardian: Evidence-Grounded Java Code Review</h1>
+    <p>Java AST Semantic Grounding • Guideline Evidence Retrieval • Multi-Stage Verification Sandbox</p>
 </div>
-
-
-<!-- =====================================================
-     MAIN CONTENT
-     ===================================================== -->
 
 <div class="container">
 
+    <!-- VERDICT BANNER -->
+    <div class="verdict-banner badge-inconclusive">
+        <div class="verdict-title">VERDICT: INCONCLUSIVE (RESIDUAL RISKS NOTED)</div>
+        <div class="verdict-desc">Code compiles and static violations were mitigated; however, comprehensive unit tests were absent to mechanically guarantee complete runtime preservation under all edge cases.</div>
+    </div>
 
-    <!-- =================================================
-         SOURCE CODE
-         ================================================= -->
+    <!-- METRICS GRID -->
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <div class="metric-label">Target File</div>
+            <div class="metric-val" style="font-size: 18px;">TestExample.java</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">Static Violations</div>
+            <div class="metric-val">18</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">Time Complexity</div>
+            <div class="metric-val">O(1)</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">Space Complexity</div>
+            <div class="metric-val">O(1)</div>
+        </div>
+    </div>
 
+    <!-- ORIGINAL SOURCE CODE -->
     <div class="card">
-
-        <h2>
-            Source Code
-        </h2>
-
-        <pre class="code">
-public class TestExample {
+        <h2>Target Source Code</h2>
+        <pre class="code-block">public class TestExample {
 
     public static void main(String[] args) {
         int x = 10;
@@ -395,60 +164,649 @@ public class TestExample {
 
         System.out.println(&quot;Hello Hybrid Code Review&quot;);
     }
-}
-</pre>
-
+}</pre>
     </div>
 
-
-    <!-- =================================================
-         STATIC ANALYZER RESULTS
-         ================================================= -->
-
+    <!-- STATIC ANALYZER RESULTS -->
     <div class="card">
-
-        <h2>
-            Static Analyzer Results
-        </h2>
-
-        <pre class="analyzer">
-Checkstyle:
-- Missing Javadoc comment for TestExample
-- Missing Javadoc comment for main
-- Indentation violations
-
-PMD:
-- SystemPrintln: Usage of System.out/err
-- NoPackage: Class should belong to a named package
-- ShortVariable: Avoid variables with short names like x
-- ShortVariable: Avoid variables with short names like y
-- LocalVariableCouldBeFinal: Local variable x could be final
-- LocalVariableCouldBeFinal: Local variable y could be final
-</pre>
-
+        <h2>Static Analysis Diagnostics (PMD & Checkstyle)</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Tool</th>
+                    <th>Rule</th>
+                    <th>Location</th>
+                    <th>Severity</th>
+                    <th>Diagnostic Message</th>
+                    <th>Documentation</th>
+                </tr>
+            </thead>
+            <tbody>
+                
+            <tr>
+                <td><span class="tool-tag tool-checkstyle">Checkstyle</span></td>
+                <td><strong>MissingJavadocTypeCheck</strong></td>
+                <td>Line 1</td>
+                <td><span class="sev-tag sev-warning">warning</span></td>
+                <td>Missing a Javadoc comment for &#x27;TestExample&#x27;.</td>
+                <td><a href='https://checkstyle.sourceforge.io/checks/missingjavadoctypecheck.html' target='_blank' class='link'>Docs</a></td>
+            </tr>
+            
+            <tr>
+                <td><span class="tool-tag tool-pmd">PMD</span></td>
+                <td><strong>NoPackage</strong></td>
+                <td>Line 1</td>
+                <td><span class="sev-tag sev-3">3</span></td>
+                <td>All classes, interfaces, enums and annotations must belong to a named package</td>
+                <td><a href='https://docs.pmd-code.org/snapshot/pmd_rules_java_codestyle.html#nopackage' target='_blank' class='link'>Docs</a></td>
+            </tr>
+            
+            <tr>
+                <td><span class="tool-tag tool-pmd">PMD</span></td>
+                <td><strong>TestClassWithoutTestCases</strong></td>
+                <td>Line 1</td>
+                <td><span class="sev-tag sev-3">3</span></td>
+                <td>The class &#x27;TestExample&#x27; might be a test class, but it contains no test cases.</td>
+                <td><a href='https://docs.pmd-code.org/snapshot/pmd_rules_java_errorprone.html#testclasswithouttestcases' target='_blank' class='link'>Docs</a></td>
+            </tr>
+            
+            <tr>
+                <td><span class="tool-tag tool-checkstyle">Checkstyle</span></td>
+                <td><strong>IndentationCheck</strong></td>
+                <td>Line 3</td>
+                <td><span class="sev-tag sev-warning">warning</span></td>
+                <td>&#x27;method def modifier&#x27; has incorrect indentation level 4, expected level should be 2.</td>
+                <td><a href='https://checkstyle.sourceforge.io/checks/indentationcheck.html' target='_blank' class='link'>Docs</a></td>
+            </tr>
+            
+            <tr>
+                <td><span class="tool-tag tool-checkstyle">Checkstyle</span></td>
+                <td><strong>MissingJavadocMethodCheck</strong></td>
+                <td>Line 3</td>
+                <td><span class="sev-tag sev-warning">warning</span></td>
+                <td>Missing a Javadoc comment for &#x27;main&#x27;.</td>
+                <td><a href='https://checkstyle.sourceforge.io/checks/missingjavadocmethodcheck.html' target='_blank' class='link'>Docs</a></td>
+            </tr>
+            
+            <tr>
+                <td><span class="tool-tag tool-checkstyle">Checkstyle</span></td>
+                <td><strong>IndentationCheck</strong></td>
+                <td>Line 4</td>
+                <td><span class="sev-tag sev-warning">warning</span></td>
+                <td>&#x27;method def&#x27; child has incorrect indentation level 8, expected level should be 4.</td>
+                <td><a href='https://checkstyle.sourceforge.io/checks/indentationcheck.html' target='_blank' class='link'>Docs</a></td>
+            </tr>
+            
+            <tr>
+                <td><span class="tool-tag tool-pmd">PMD</span></td>
+                <td><strong>ShortVariable</strong></td>
+                <td>Line 4</td>
+                <td><span class="sev-tag sev-3">3</span></td>
+                <td>Avoid variables with short names like x</td>
+                <td><a href='https://docs.pmd-code.org/snapshot/pmd_rules_java_codestyle.html#shortvariable' target='_blank' class='link'>Docs</a></td>
+            </tr>
+            
+            <tr>
+                <td><span class="tool-tag tool-pmd">PMD</span></td>
+                <td><strong>LocalVariableCouldBeFinal</strong></td>
+                <td>Line 4</td>
+                <td><span class="sev-tag sev-3">3</span></td>
+                <td>Local variable &#x27;x&#x27; could be declared final</td>
+                <td><a href='https://docs.pmd-code.org/snapshot/pmd_rules_java_codestyle.html#localvariablecouldbefinal' target='_blank' class='link'>Docs</a></td>
+            </tr>
+            
+            <tr>
+                <td><span class="tool-tag tool-checkstyle">Checkstyle</span></td>
+                <td><strong>IndentationCheck</strong></td>
+                <td>Line 5</td>
+                <td><span class="sev-tag sev-warning">warning</span></td>
+                <td>&#x27;method def&#x27; child has incorrect indentation level 8, expected level should be 4.</td>
+                <td><a href='https://checkstyle.sourceforge.io/checks/indentationcheck.html' target='_blank' class='link'>Docs</a></td>
+            </tr>
+            
+            <tr>
+                <td><span class="tool-tag tool-pmd">PMD</span></td>
+                <td><strong>ShortVariable</strong></td>
+                <td>Line 5</td>
+                <td><span class="sev-tag sev-3">3</span></td>
+                <td>Avoid variables with short names like y</td>
+                <td><a href='https://docs.pmd-code.org/snapshot/pmd_rules_java_codestyle.html#shortvariable' target='_blank' class='link'>Docs</a></td>
+            </tr>
+            
+            <tr>
+                <td><span class="tool-tag tool-pmd">PMD</span></td>
+                <td><strong>LocalVariableCouldBeFinal</strong></td>
+                <td>Line 5</td>
+                <td><span class="sev-tag sev-3">3</span></td>
+                <td>Local variable &#x27;y&#x27; could be declared final</td>
+                <td><a href='https://docs.pmd-code.org/snapshot/pmd_rules_java_codestyle.html#localvariablecouldbefinal' target='_blank' class='link'>Docs</a></td>
+            </tr>
+            
+            <tr>
+                <td><span class="tool-tag tool-checkstyle">Checkstyle</span></td>
+                <td><strong>IndentationCheck</strong></td>
+                <td>Line 7</td>
+                <td><span class="sev-tag sev-warning">warning</span></td>
+                <td>&#x27;if&#x27; has incorrect indentation level 8, expected level should be 4.</td>
+                <td><a href='https://checkstyle.sourceforge.io/checks/indentationcheck.html' target='_blank' class='link'>Docs</a></td>
+            </tr>
+            
+            <tr>
+                <td><span class="tool-tag tool-checkstyle">Checkstyle</span></td>
+                <td><strong>IndentationCheck</strong></td>
+                <td>Line 8</td>
+                <td><span class="sev-tag sev-warning">warning</span></td>
+                <td>&#x27;if&#x27; child has incorrect indentation level 12, expected level should be 6.</td>
+                <td><a href='https://checkstyle.sourceforge.io/checks/indentationcheck.html' target='_blank' class='link'>Docs</a></td>
+            </tr>
+            
+            <tr>
+                <td><span class="tool-tag tool-pmd">PMD</span></td>
+                <td><strong>SystemPrintln</strong></td>
+                <td>Line 8</td>
+                <td><span class="sev-tag sev-2">2</span></td>
+                <td>Usage of System.out/err</td>
+                <td><a href='https://docs.pmd-code.org/snapshot/pmd_rules_java_bestpractices.html#systemprintln' target='_blank' class='link'>Docs</a></td>
+            </tr>
+            
+            <tr>
+                <td><span class="tool-tag tool-checkstyle">Checkstyle</span></td>
+                <td><strong>IndentationCheck</strong></td>
+                <td>Line 9</td>
+                <td><span class="sev-tag sev-warning">warning</span></td>
+                <td>&#x27;if rcurly&#x27; has incorrect indentation level 8, expected level should be 4.</td>
+                <td><a href='https://checkstyle.sourceforge.io/checks/indentationcheck.html' target='_blank' class='link'>Docs</a></td>
+            </tr>
+            
+            <tr>
+                <td><span class="tool-tag tool-checkstyle">Checkstyle</span></td>
+                <td><strong>IndentationCheck</strong></td>
+                <td>Line 11</td>
+                <td><span class="sev-tag sev-warning">warning</span></td>
+                <td>&#x27;method def&#x27; child has incorrect indentation level 8, expected level should be 4.</td>
+                <td><a href='https://checkstyle.sourceforge.io/checks/indentationcheck.html' target='_blank' class='link'>Docs</a></td>
+            </tr>
+            
+            <tr>
+                <td><span class="tool-tag tool-pmd">PMD</span></td>
+                <td><strong>SystemPrintln</strong></td>
+                <td>Line 11</td>
+                <td><span class="sev-tag sev-2">2</span></td>
+                <td>Usage of System.out/err</td>
+                <td><a href='https://docs.pmd-code.org/snapshot/pmd_rules_java_bestpractices.html#systemprintln' target='_blank' class='link'>Docs</a></td>
+            </tr>
+            
+            <tr>
+                <td><span class="tool-tag tool-checkstyle">Checkstyle</span></td>
+                <td><strong>IndentationCheck</strong></td>
+                <td>Line 12</td>
+                <td><span class="sev-tag sev-warning">warning</span></td>
+                <td>&#x27;method def rcurly&#x27; has incorrect indentation level 4, expected level should be 2.</td>
+                <td><a href='https://checkstyle.sourceforge.io/checks/indentationcheck.html' target='_blank' class='link'>Docs</a></td>
+            </tr>
+            
+            </tbody>
+        </table>
     </div>
 
-
-    <!-- =================================================
-         AUTOMATIC JAVADOC GENERATION
-         ================================================= -->
-
+    <!-- JAVA SEMANTIC SYMBOLS (CONTRIBUTION C1) -->
     <div class="card">
+        <h2>Java Semantic Symbol Context (Contribution C1)</h2>
+        <p style="color: #94a3b8; font-size: 13px; margin-top: -6px;">
+            AST-resolved variable types, method boundaries, and call hierarchies for grounded reasoning.
+        </p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Line</th>
+                    <th>Statement</th>
+                    <th>Class</th>
+                    <th>Method</th>
+                    <th>In-Scope Variables & Types</th>
+                    <th>Calls</th>
+                </tr>
+            </thead>
+            <tbody>
+                
+                <tr>
+                    <td><strong>Line 1</strong></td>
+                    <td><code>public class TestExample {</code></td>
+                    <td>TestExample</td>
+                    <td>—()</td>
+                    <td>None</td>
+                    <td>None</td>
+                </tr>
+                
+                <tr>
+                    <td><strong>Line 2</strong></td>
+                    <td><code></code></td>
+                    <td>TestExample</td>
+                    <td>main()</td>
+                    <td>None</td>
+                    <td>None</td>
+                </tr>
+                
+                <tr>
+                    <td><strong>Line 3</strong></td>
+                    <td><code>public static void main(String[] args) {</code></td>
+                    <td>TestExample</td>
+                    <td>—()</td>
+                    <td>None</td>
+                    <td>main</td>
+                </tr>
+                
+                <tr>
+                    <td><strong>Line 4</strong></td>
+                    <td><code>int x = 10;</code></td>
+                    <td>TestExample</td>
+                    <td>—()</td>
+                    <td>None</td>
+                    <td>None</td>
+                </tr>
+                
+                <tr>
+                    <td><strong>Line 5</strong></td>
+                    <td><code>int y = 20;</code></td>
+                    <td>TestExample</td>
+                    <td>—()</td>
+                    <td>None</td>
+                    <td>None</td>
+                </tr>
+                
+                <tr>
+                    <td><strong>Line 6</strong></td>
+                    <td><code></code></td>
+                    <td>TestExample</td>
+                    <td>—()</td>
+                    <td>None</td>
+                    <td>None</td>
+                </tr>
+                
+                <tr>
+                    <td><strong>Line 7</strong></td>
+                    <td><code>if (x &lt; y) {</code></td>
+                    <td>TestExample</td>
+                    <td>—()</td>
+                    <td>None</td>
+                    <td>if</td>
+                </tr>
+                
+                <tr>
+                    <td><strong>Line 8</strong></td>
+                    <td><code>System.out.println(&quot;x is smaller&quot;);</code></td>
+                    <td>TestExample</td>
+                    <td>—()</td>
+                    <td>None</td>
+                    <td>System.out.println</td>
+                </tr>
+                
+                <tr>
+                    <td><strong>Line 9</strong></td>
+                    <td><code>}</code></td>
+                    <td>TestExample</td>
+                    <td>—()</td>
+                    <td>None</td>
+                    <td>None</td>
+                </tr>
+                
+                <tr>
+                    <td><strong>Line 10</strong></td>
+                    <td><code></code></td>
+                    <td>TestExample</td>
+                    <td>—()</td>
+                    <td>None</td>
+                    <td>None</td>
+                </tr>
+                
+                <tr>
+                    <td><strong>Line 11</strong></td>
+                    <td><code>System.out.println(&quot;Hello Hybrid Code Review&quot;);</code></td>
+                    <td>TestExample</td>
+                    <td>—()</td>
+                    <td>None</td>
+                    <td>System.out.println</td>
+                </tr>
+                
+                <tr>
+                    <td><strong>Line 12</strong></td>
+                    <td><code>}</code></td>
+                    <td>TestExample</td>
+                    <td>—()</td>
+                    <td>None</td>
+                    <td>None</td>
+                </tr>
+                
+                <tr>
+                    <td><strong>Line 13</strong></td>
+                    <td><code>}</code></td>
+                    <td>TestExample</td>
+                    <td>—()</td>
+                    <td>None</td>
+                    <td>None</td>
+                </tr>
+                
+            </tbody>
+        </table>
+    </div>
 
-        <h2>
-            Automatic JavaDoc Generation
-        </h2>
+    <!-- EVIDENCE-GROUNDED REVIEW (CONTRIBUTION C2) -->
+    <div class="card">
+        <h2>Evidence-Grounded Review & Explanations (Contribution C2)</h2>
+        
+            <div class="issue-item">
+                <div class="issue-header">
+                    <span class="issue-num">#1</span>
+                    <span class="issue-title">[Checkstyle] MissingJavadocTypeCheck (Line 1)</span>
+                    <span class="sev-tag sev-warning">warning</span>
+                </div>
+                <div class="issue-body">
+                    <p><strong>Root Cause:</strong> Public and package-private classes, interfaces, and enums must provide explanatory Javadoc comments.</p>
+                    <p><strong>Supporting Evidence:</strong> <code>Provenance: Class: TestExample. Context line: `public class TestExample {`</code></p>
+                    <p><strong>Coding Standard Reference:</strong> <span class="ref-tag">Google Java Style §7.1.1 (Javadoc: Class Comments) / Checkstyle MissingJavadocType</span></p>
+                    <p><strong>Remediation Action:</strong> Add a `/** Represents ... */` block directly preceding the class declaration.</p>
+                </div>
+            </div>
+            
+            <div class="issue-item">
+                <div class="issue-header">
+                    <span class="issue-num">#2</span>
+                    <span class="issue-title">[PMD] NoPackage (Line 1)</span>
+                    <span class="sev-tag sev-3">3</span>
+                </div>
+                <div class="issue-body">
+                    <p><strong>Root Cause:</strong> Classes, interfaces, enums, and annotations must always belong to an explicitly named package.</p>
+                    <p><strong>Supporting Evidence:</strong> <code>Provenance: Class: TestExample. Context line: `public class TestExample {`</code></p>
+                    <p><strong>Coding Standard Reference:</strong> <span class="ref-tag">Java Language Specification (JLS §7.4.2) / Google Java Style §3.1</span></p>
+                    <p><strong>Remediation Action:</strong> Declare an appropriate package statement at line 1 (e.g., `package com.example;`).</p>
+                </div>
+            </div>
+            
+            <div class="issue-item">
+                <div class="issue-header">
+                    <span class="issue-num">#3</span>
+                    <span class="issue-title">[PMD] TestClassWithoutTestCases (Line 1)</span>
+                    <span class="sev-tag sev-3">3</span>
+                </div>
+                <div class="issue-body">
+                    <p><strong>Root Cause:</strong> Classes named or structured like test cases must contain at least one valid `@Test` method.</p>
+                    <p><strong>Supporting Evidence:</strong> <code>Provenance: Class: TestExample. Context line: `public class TestExample {`</code></p>
+                    <p><strong>Coding Standard Reference:</strong> <span class="ref-tag">JUnit Best Practices / PMD TestClassWithoutTestCases</span></p>
+                    <p><strong>Remediation Action:</strong> Rename non-test classes (remove &#x27;Test&#x27; prefix/suffix) or annotate test methods with `@Test`.</p>
+                </div>
+            </div>
+            
+            <div class="issue-item">
+                <div class="issue-header">
+                    <span class="issue-num">#4</span>
+                    <span class="issue-title">[Checkstyle] IndentationCheck (Line 3)</span>
+                    <span class="sev-tag sev-warning">warning</span>
+                </div>
+                <div class="issue-body">
+                    <p><strong>Root Cause:</strong> Block elements, method headers, and statement lines must conform to the project&#x27;s standard indentation level (typically 2 or 4 spaces).</p>
+                    <p><strong>Supporting Evidence:</strong> <code>Provenance: Class: TestExample | Calls: main. Context line: `public static void main(String[] args) {`</code></p>
+                    <p><strong>Coding Standard Reference:</strong> <span class="ref-tag">Google Java Style §4.2 (Block indentation: +2 spaces) / Checkstyle Indentation</span></p>
+                    <p><strong>Remediation Action:</strong> Re-align the statement to match the enclosing block indentation hierarchy.</p>
+                </div>
+            </div>
+            
+            <div class="issue-item">
+                <div class="issue-header">
+                    <span class="issue-num">#5</span>
+                    <span class="issue-title">[Checkstyle] MissingJavadocMethodCheck (Line 3)</span>
+                    <span class="sev-tag sev-warning">warning</span>
+                </div>
+                <div class="issue-body">
+                    <p><strong>Root Cause:</strong> Public methods should have Javadoc comments documenting their purpose, parameters, return values, and thrown exceptions.</p>
+                    <p><strong>Supporting Evidence:</strong> <code>Provenance: Class: TestExample | Calls: main. Context line: `public static void main(String[] args) {`</code></p>
+                    <p><strong>Coding Standard Reference:</strong> <span class="ref-tag">Google Java Style §7.1.2 (Javadoc: Method Comments) / Checkstyle MissingJavadocMethod</span></p>
+                    <p><strong>Remediation Action:</strong> Add a Javadoc block with `@param` and `@return` tags preceding the method signature.</p>
+                </div>
+            </div>
+            
+            <div class="issue-item">
+                <div class="issue-header">
+                    <span class="issue-num">#6</span>
+                    <span class="issue-title">[Checkstyle] IndentationCheck (Line 4)</span>
+                    <span class="sev-tag sev-warning">warning</span>
+                </div>
+                <div class="issue-body">
+                    <p><strong>Root Cause:</strong> Block elements, method headers, and statement lines must conform to the project&#x27;s standard indentation level (typically 2 or 4 spaces).</p>
+                    <p><strong>Supporting Evidence:</strong> <code>Provenance: Class: TestExample. Context line: `int x = 10;`</code></p>
+                    <p><strong>Coding Standard Reference:</strong> <span class="ref-tag">Google Java Style §4.2 (Block indentation: +2 spaces) / Checkstyle Indentation</span></p>
+                    <p><strong>Remediation Action:</strong> Re-align the statement to match the enclosing block indentation hierarchy.</p>
+                </div>
+            </div>
+            
+            <div class="issue-item">
+                <div class="issue-header">
+                    <span class="issue-num">#7</span>
+                    <span class="issue-title">[PMD] ShortVariable (Line 4)</span>
+                    <span class="sev-tag sev-3">3</span>
+                </div>
+                <div class="issue-body">
+                    <p><strong>Root Cause:</strong> Avoid variables with excessively short names (fewer than 3 characters, e.g. &#x27;x&#x27;, &#x27;y&#x27;) outside standard loop indices.</p>
+                    <p><strong>Supporting Evidence:</strong> <code>Provenance: Class: TestExample. Context line: `int x = 10;`</code></p>
+                    <p><strong>Coding Standard Reference:</strong> <span class="ref-tag">Clean Code (Ch. 2: Meaningful Names) / PMD ShortVariable Rule</span></p>
+                    <p><strong>Remediation Action:</strong> Rename variable to reflect its purpose (e.g., `firstValue`, `secondValue`, `xCoordinate`).</p>
+                </div>
+            </div>
+            
+            <div class="issue-item">
+                <div class="issue-header">
+                    <span class="issue-num">#8</span>
+                    <span class="issue-title">[PMD] LocalVariableCouldBeFinal (Line 4)</span>
+                    <span class="sev-tag sev-3">3</span>
+                </div>
+                <div class="issue-body">
+                    <p><strong>Root Cause:</strong> Local variables that are assigned once and never reassigned should be explicitly declared with the `final` keyword.</p>
+                    <p><strong>Supporting Evidence:</strong> <code>Provenance: Class: TestExample. Context line: `int x = 10;`</code></p>
+                    <p><strong>Coding Standard Reference:</strong> <span class="ref-tag">Effective Java (Item 17: Minimize Mutability) / PMD LocalVariableCouldBeFinal</span></p>
+                    <p><strong>Remediation Action:</strong> Prepend the `final` keyword to the variable declaration: `final int value = ...;`.</p>
+                </div>
+            </div>
+            
+            <div class="issue-item">
+                <div class="issue-header">
+                    <span class="issue-num">#9</span>
+                    <span class="issue-title">[Checkstyle] IndentationCheck (Line 5)</span>
+                    <span class="sev-tag sev-warning">warning</span>
+                </div>
+                <div class="issue-body">
+                    <p><strong>Root Cause:</strong> Block elements, method headers, and statement lines must conform to the project&#x27;s standard indentation level (typically 2 or 4 spaces).</p>
+                    <p><strong>Supporting Evidence:</strong> <code>Provenance: Class: TestExample. Context line: `int y = 20;`</code></p>
+                    <p><strong>Coding Standard Reference:</strong> <span class="ref-tag">Google Java Style §4.2 (Block indentation: +2 spaces) / Checkstyle Indentation</span></p>
+                    <p><strong>Remediation Action:</strong> Re-align the statement to match the enclosing block indentation hierarchy.</p>
+                </div>
+            </div>
+            
+            <div class="issue-item">
+                <div class="issue-header">
+                    <span class="issue-num">#10</span>
+                    <span class="issue-title">[PMD] ShortVariable (Line 5)</span>
+                    <span class="sev-tag sev-3">3</span>
+                </div>
+                <div class="issue-body">
+                    <p><strong>Root Cause:</strong> Avoid variables with excessively short names (fewer than 3 characters, e.g. &#x27;x&#x27;, &#x27;y&#x27;) outside standard loop indices.</p>
+                    <p><strong>Supporting Evidence:</strong> <code>Provenance: Class: TestExample. Context line: `int y = 20;`</code></p>
+                    <p><strong>Coding Standard Reference:</strong> <span class="ref-tag">Clean Code (Ch. 2: Meaningful Names) / PMD ShortVariable Rule</span></p>
+                    <p><strong>Remediation Action:</strong> Rename variable to reflect its purpose (e.g., `firstValue`, `secondValue`, `xCoordinate`).</p>
+                </div>
+            </div>
+            
+            <div class="issue-item">
+                <div class="issue-header">
+                    <span class="issue-num">#11</span>
+                    <span class="issue-title">[PMD] LocalVariableCouldBeFinal (Line 5)</span>
+                    <span class="sev-tag sev-3">3</span>
+                </div>
+                <div class="issue-body">
+                    <p><strong>Root Cause:</strong> Local variables that are assigned once and never reassigned should be explicitly declared with the `final` keyword.</p>
+                    <p><strong>Supporting Evidence:</strong> <code>Provenance: Class: TestExample. Context line: `int y = 20;`</code></p>
+                    <p><strong>Coding Standard Reference:</strong> <span class="ref-tag">Effective Java (Item 17: Minimize Mutability) / PMD LocalVariableCouldBeFinal</span></p>
+                    <p><strong>Remediation Action:</strong> Prepend the `final` keyword to the variable declaration: `final int value = ...;`.</p>
+                </div>
+            </div>
+            
+            <div class="issue-item">
+                <div class="issue-header">
+                    <span class="issue-num">#12</span>
+                    <span class="issue-title">[Checkstyle] IndentationCheck (Line 7)</span>
+                    <span class="sev-tag sev-warning">warning</span>
+                </div>
+                <div class="issue-body">
+                    <p><strong>Root Cause:</strong> Block elements, method headers, and statement lines must conform to the project&#x27;s standard indentation level (typically 2 or 4 spaces).</p>
+                    <p><strong>Supporting Evidence:</strong> <code>Provenance: Class: TestExample | Calls: if. Context line: `if (x &lt; y) {`</code></p>
+                    <p><strong>Coding Standard Reference:</strong> <span class="ref-tag">Google Java Style §4.2 (Block indentation: +2 spaces) / Checkstyle Indentation</span></p>
+                    <p><strong>Remediation Action:</strong> Re-align the statement to match the enclosing block indentation hierarchy.</p>
+                </div>
+            </div>
+            
+            <div class="issue-item">
+                <div class="issue-header">
+                    <span class="issue-num">#13</span>
+                    <span class="issue-title">[Checkstyle] IndentationCheck (Line 8)</span>
+                    <span class="sev-tag sev-warning">warning</span>
+                </div>
+                <div class="issue-body">
+                    <p><strong>Root Cause:</strong> Block elements, method headers, and statement lines must conform to the project&#x27;s standard indentation level (typically 2 or 4 spaces).</p>
+                    <p><strong>Supporting Evidence:</strong> <code>Provenance: Class: TestExample | Calls: System.out.println. Context line: `System.out.println(&quot;x is smaller&quot;);`</code></p>
+                    <p><strong>Coding Standard Reference:</strong> <span class="ref-tag">Google Java Style §4.2 (Block indentation: +2 spaces) / Checkstyle Indentation</span></p>
+                    <p><strong>Remediation Action:</strong> Re-align the statement to match the enclosing block indentation hierarchy.</p>
+                </div>
+            </div>
+            
+            <div class="issue-item">
+                <div class="issue-header">
+                    <span class="issue-num">#14</span>
+                    <span class="issue-title">[PMD] SystemPrintln (Line 8)</span>
+                    <span class="sev-tag sev-2">2</span>
+                </div>
+                <div class="issue-body">
+                    <p><strong>Root Cause:</strong> Avoid direct invocations of System.out.println() or System.err.print() in production code.</p>
+                    <p><strong>Supporting Evidence:</strong> <code>Provenance: Class: TestExample | Calls: System.out.println. Context line: `System.out.println(&quot;x is smaller&quot;);`</code></p>
+                    <p><strong>Coding Standard Reference:</strong> <span class="ref-tag">SEI CERT Oracle Coding Standard for Java (ERR02-J) / PMD SystemPrintln</span></p>
+                    <p><strong>Remediation Action:</strong> Replace with a structured logging framework (e.g., SLF4J `logger.info(...)`) or remove debug print statements.</p>
+                </div>
+            </div>
+            
+            <div class="issue-item">
+                <div class="issue-header">
+                    <span class="issue-num">#15</span>
+                    <span class="issue-title">[Checkstyle] IndentationCheck (Line 9)</span>
+                    <span class="sev-tag sev-warning">warning</span>
+                </div>
+                <div class="issue-body">
+                    <p><strong>Root Cause:</strong> Block elements, method headers, and statement lines must conform to the project&#x27;s standard indentation level (typically 2 or 4 spaces).</p>
+                    <p><strong>Supporting Evidence:</strong> <code>Provenance: Class: TestExample. Context line: `}`</code></p>
+                    <p><strong>Coding Standard Reference:</strong> <span class="ref-tag">Google Java Style §4.2 (Block indentation: +2 spaces) / Checkstyle Indentation</span></p>
+                    <p><strong>Remediation Action:</strong> Re-align the statement to match the enclosing block indentation hierarchy.</p>
+                </div>
+            </div>
+            
+            <div class="issue-item">
+                <div class="issue-header">
+                    <span class="issue-num">#16</span>
+                    <span class="issue-title">[Checkstyle] IndentationCheck (Line 11)</span>
+                    <span class="sev-tag sev-warning">warning</span>
+                </div>
+                <div class="issue-body">
+                    <p><strong>Root Cause:</strong> Block elements, method headers, and statement lines must conform to the project&#x27;s standard indentation level (typically 2 or 4 spaces).</p>
+                    <p><strong>Supporting Evidence:</strong> <code>Provenance: Class: TestExample | Calls: System.out.println. Context line: `System.out.println(&quot;Hello Hybrid Code Review&quot;);`</code></p>
+                    <p><strong>Coding Standard Reference:</strong> <span class="ref-tag">Google Java Style §4.2 (Block indentation: +2 spaces) / Checkstyle Indentation</span></p>
+                    <p><strong>Remediation Action:</strong> Re-align the statement to match the enclosing block indentation hierarchy.</p>
+                </div>
+            </div>
+            
+            <div class="issue-item">
+                <div class="issue-header">
+                    <span class="issue-num">#17</span>
+                    <span class="issue-title">[PMD] SystemPrintln (Line 11)</span>
+                    <span class="sev-tag sev-2">2</span>
+                </div>
+                <div class="issue-body">
+                    <p><strong>Root Cause:</strong> Avoid direct invocations of System.out.println() or System.err.print() in production code.</p>
+                    <p><strong>Supporting Evidence:</strong> <code>Provenance: Class: TestExample | Calls: System.out.println. Context line: `System.out.println(&quot;Hello Hybrid Code Review&quot;);`</code></p>
+                    <p><strong>Coding Standard Reference:</strong> <span class="ref-tag">SEI CERT Oracle Coding Standard for Java (ERR02-J) / PMD SystemPrintln</span></p>
+                    <p><strong>Remediation Action:</strong> Replace with a structured logging framework (e.g., SLF4J `logger.info(...)`) or remove debug print statements.</p>
+                </div>
+            </div>
+            
+            <div class="issue-item">
+                <div class="issue-header">
+                    <span class="issue-num">#18</span>
+                    <span class="issue-title">[Checkstyle] IndentationCheck (Line 12)</span>
+                    <span class="sev-tag sev-warning">warning</span>
+                </div>
+                <div class="issue-body">
+                    <p><strong>Root Cause:</strong> Block elements, method headers, and statement lines must conform to the project&#x27;s standard indentation level (typically 2 or 4 spaces).</p>
+                    <p><strong>Supporting Evidence:</strong> <code>Provenance: Class: TestExample. Context line: `}`</code></p>
+                    <p><strong>Coding Standard Reference:</strong> <span class="ref-tag">Google Java Style §4.2 (Block indentation: +2 spaces) / Checkstyle Indentation</span></p>
+                    <p><strong>Remediation Action:</strong> Re-align the statement to match the enclosing block indentation hierarchy.</p>
+                </div>
+            </div>
+            
+    </div>
 
-        <pre class="javadoc">
-/**
+    <!-- CANDIDATE PATCH (STAGE 3) -->
+    <div class="card">
+        <h2>Candidate Automated Repair Patch (Stage 3)</h2>
+        <p><strong>Change Rationale:</strong> Added package declaration `package com.example.codereview;` to ensure proper namespace isolation.; Declared `firstNumber` as `final` and renamed short variable `x` for descriptive naming.; Declared `secondNumber` as `final` and renamed short variable `y` for descriptive naming.; Identified direct standard output usage (`System.out.println`); recommend replacing with structured logger in production.; Generated missing class and method JavaDoc headers.</p>
+        <p><strong>Unified Diff:</strong></p>
+        <pre class="code-block">--- a/test_java/TestExample.java
++++ b/test_java/TestExample.java
+@@ -1,11 +1,20 @@
++package com.example.codereview;
++
++/**
++ * Represents the TestExample class.
++ */
+ public class TestExample {
+ 
++    /**
++     * Application entry point.
++     * @param args parameter value.
++     */
+     public static void main(String[] args) {
+-        int x = 10;
+-        int y = 20;
++        final int firstNumber = 10;
++        final int secondNumber = 20;
+ 
+-        if (x &lt; y) {
+-            System.out.println(&quot;x is smaller&quot;);
++        if (firstNumber &lt; secondNumber) {
++            System.out.println(&quot;firstNumber is smaller&quot;);
+         }
+ 
+         System.out.println(&quot;Hello Hybrid Code Review&quot;);
+</pre>
+    </div>
+
+    <!-- MULTI-STAGE VERIFICATION (CONTRIBUTION C3) -->
+    <div class="card">
+        <h2>Multi-Stage Sandbox Verification Results (Contribution C3)</h2>
+        <p><strong>Compilation Status:</strong> <code>Compilation successful with 0 errors.</code></p>
+        <p><strong>Attempt & Execution History:</strong></p>
+        <ul>
+            <li>Attempt 1: Applied candidate patch to isolated sandbox at TestExample.java</li><li>Compilation: SUCCESS (javac completed with exit code 0)</li><li>Reanalysis: Found 12 findings (originally 18)</li>
+        </ul>
+        <p><strong>Residual Risk Assessment:</strong></p>
+        <ul>
+            <li>⚠️ Code compiles cleanly and static violations were mitigated; however, comprehensive unit tests were absent to mechanically verify behavioral equivalence under all runtime edge cases.</li>
+        </ul>
+    </div>
+
+    <!-- AUTOMATIC JAVADOCS -->
+    <div class="card">
+        <h2>Synthesized JavaDoc Documentation</h2>
+        <pre class="code-block">/**
  * Represents the TestExample class.
  */
 public class TestExample {
 
     /**
-     * Entry point of the application.
-     *
-     * @param args parameter used by the method.
+     * Application entry point.
+     * @param args parameter value.
      */
     public static void main(String[] args) {
         int x = 10;
@@ -461,191 +819,14 @@ public class TestExample {
         System.out.println(&quot;Hello Hybrid Code Review&quot;);
     }
 }</pre>
-
     </div>
-
-
-
-    <!-- =================================================
-         COMPLEXITY ANALYSIS
-         ================================================= -->
-
-    <div class="card">
-
-        <h2>
-            Complexity Analysis
-        </h2>
-
-
-        <div class="complexity-container">
-
-
-            <!-- TIME COMPLEXITY -->
-
-            <div class="complexity-box">
-
-                <div class="complexity-title">
-
-                    Time Complexity
-
-                </div>
-
-
-                <div class="complexity-value">
-
-                    Not determined
-
-                </div>
-
-            </div>
-
-
-            <!-- SPACE COMPLEXITY -->
-
-            <div class="complexity-box">
-
-                <div class="complexity-title">
-
-                    Space Complexity
-
-                </div>
-
-
-                <div class="complexity-value">
-
-                    Not determined
-
-                </div>
-
-            </div>
-
-
-        </div>
-
-    </div>
-
-
-    <!-- =================================================
-         AI GENERATED REVIEW
-         ================================================= -->
-
-    <div class="card">
-
-        <h2>
-            AI Generated Code Review
-        </h2>
-
-
-        <span class="badge">
-
-            LoRA Model Generated
-
-        </span>
-
-
-        <div class="review">
-
-            ### Issues found
-
-1. **Missing Javadoc comments for `TestExample`**
-   - The method `main` does not have a Javadoc comment, which is required for documentation purposes.
-   - The method `main` has a single line of code, which is not considered a Javadoc comment.
-
-2. **Missing Javadoc comments for `main`**
-   - The method `main` does not have a Javadoc comment, which is required for documentation purposes.
-   - The method `main` has a single line of code, which is not considered a Javadoc comment.
-
-3. **Indentation violations**
-   - The code has multiple lines of indentation, which is not consistent with the Java coding style.
-   - The code has multiple lines of indentation, which is not consistent with the Java coding style.
-
-### Suggestions for Improvements
-
-1. **Add Javadoc comments to `TestExample`**
-   - Add Javadoc comments to the `main` method to explain its purpose and functionality.
-
-2. **Fix indentation in `main` method**
-   - Fix indentation in the `main` method to ensure it is properly indented.
-
-3. **Remove unnecessary lines of code**
-   - Remove unnecessary lines of code from the `main` method to improve readability and maintainability.
-
-4. **Use proper data structures**
-   - Use proper data structures such as arrays or lists to store data.
-
-5. **Optimize code**
-   - Optimize the code to reduce unnecessary operations and improve performance.
-
-6. **Document the code**
-   - Document the code to explain its purpose and functionality.
-
-7. **Refactor the code**
-   - Refactor the code to improve readability and maintainability.
-
-8. **Add unit tests**
-   - Add unit tests to verify the correctness of the code.
-
-9. **Use proper naming conventions**
-   - Use proper naming conventions such as camelCase for classes, methods, and variables.
-
-10. **Implement exception handling**
-    - Implement exception handling to manage potential errors gracefully.
-
-### Improved code where appropriate
-
-```java
-public class TestExample {
-
-    public static void main(String[] args) {
-        int x = 10;
-        int y = 20;
-
-        if (x &lt; y) {
-            System.out.println(&quot;x is smaller&quot;);
-        } else {
-            System.out.println(&quot;y is larger&quot;);
-        }
-    }
-}
-```
-
-### Time complexity
-
-[O(1)]
-
-### Space complexity
-
-[O(1)]
-
----
-
-### Instructions
-
-1.
-
-        </div>
-
-    </div>
-
 
 </div>
-
-
-<!-- =====================================================
-     FOOTER
-     ===================================================== -->
 
 <div class="footer">
-
-    Hybrid Code Review Project
-
-    <br>
-
-    Static Analysis + LoRA Fine-Tuned LLM
-
+    CodeGuardian • Department of Computer Science and Information Technology, Koneru Lakshmaiah Education Foundation
+    <br>Supervised by Dr. Jagan Mohan Reddy Danda
 </div>
 
-
 </body>
-
 </html>
